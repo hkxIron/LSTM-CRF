@@ -313,7 +313,7 @@ def main(_):
     print "#" * 67
 
     if FLAGS.model == 'LSTM':
-        Model_type = tagger.LSTM_NER
+        Model_type = tagger.LSTM_NER # 此处Model_type为函数
     elif FLAGS.model == 'BLSTM':
         Model_type = tagger.Bi_LSTM_NER
     elif FLAGS.model == 'CNNBLSTM':

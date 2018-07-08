@@ -22,7 +22,7 @@ class Hybrid_LSTM_tagger(neural_tagger):
 
     def __init__(self, nb_words, emb_dim, emb_matrix, feat_size, hidden_dim,
                  nb_classes, time_steps, fine_tuning=False, drop_rate=1.0,
-                 batch_size=None, templates=1, window=1, l2_reg=0.):
+                 batch_size=None, template_size=1, window=1, l2_reg=0.):
         self.nb_words = nb_words
         self.emb_dim = emb_dim
         self.feat_size = feat_size
@@ -32,7 +32,7 @@ class Hybrid_LSTM_tagger(neural_tagger):
         self.drop_rate = drop_rate
         self.batch_size = batch_size
         self.time_steps = time_steps
-        self.templates = templates
+        self.templates = template_size
         self.window = window
         self.l2_reg = l2_reg
         self.transition = None

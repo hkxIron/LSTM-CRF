@@ -55,7 +55,7 @@ class neural_tagger(object):
 
     def __init__(self, nb_words, emb_dim, emb_matrix, hidden_dim, nb_classes,
                  drop_rate=1.0, batch_size=None, time_steps=0,
-                 templates=1, l2_reg=0., fine_tuning=False):
+                 template_size=1, l2_reg=0., fine_tuning=False):
         self.nb_words = nb_words
         self.emb_dim = emb_dim
         self.hidden_dim = hidden_dim
@@ -63,20 +63,20 @@ class neural_tagger(object):
         self.drop_rate = drop_rate
         self.batch_size = batch_size
         self.time_steps = time_steps
-        self.templates = templates
+        self.template_size = template_size
         self.l2_reg = l2_reg
         self.fine_tuning = fine_tuning
 
         if self.fine_tuning:
             self.emb_matrix = tf.Variable(
-                emb_matrix, dtype=tf.float32, name="embeddings")
+                emb_matrix, dtype=tf.float32, name="embeddings") # [vocab_size, embedding_size]
         else:
             self.emb_matrix = tf.constant(
                 emb_matrix, dtype=tf.float32, name="embeddings")
 
         with tf.name_scope('inputs'):
             self.X = tf.placeholder(
-                tf.int32, shape=[None, self.time_steps, self.templates],
+                tf.int32, shape=[None, self.time_steps, self.template_size],
                 name='X_placeholder')
             self.Y = tf.placeholder(
                 tf.int32, shape=[None, self.time_steps],
@@ -318,10 +318,10 @@ class LSTM_NER(neural_tagger):
         return
 
     def inference(self, X, X_len, reuse=None):
-        word_vectors = tf.nn.embedding_lookup(self.emb_matrix, X)
+        word_vectors = tf.nn.embedding_lookup(self.emb_matrix, X) # [batch, feature_size ,hidden_dim ]
         word_vectors = tf.nn.dropout(word_vectors, keep_prob=self.keep_prob)
         word_vectors = tf.reshape(
-            word_vectors, [-1, self.time_steps, self.templates * self.emb_dim])
+            word_vectors, [-1, self.time_steps, self.template_size * self.emb_dim])
 
         with tf.variable_scope('label_inference', reuse=reuse):
             outputs, _ = tf.nn.dynamic_rnn(
@@ -363,7 +363,7 @@ class Bi_LSTM_NER(neural_tagger):
         word_vectors = tf.nn.embedding_lookup(self.emb_matrix, X)
         word_vectors = tf.nn.dropout(word_vectors, keep_prob=self.keep_prob)
         word_vectors = tf.reshape(
-            word_vectors, [-1, self.time_steps, self.templates * self.emb_dim])
+            word_vectors, [-1, self.time_steps, self.template_size * self.emb_dim])
 
         with tf.variable_scope('label_inference', reuse=reuse):
             outputs, _ = tf.nn.bidirectional_dynamic_rnn(
@@ -419,14 +419,14 @@ class CNN_Bi_LSTM_NER(neural_tagger):
 
         with tf.variable_scope('convolution'):
             word_vectors = tf.reshape(
-                word_vectors, [-1, self.templates, self.emb_dim, 1])
+                word_vectors, [-1, self.template_size, self.emb_dim, 1])
             conv = tf.nn.conv2d(word_vectors, self.conv_weight,
                                 strides=[1, 1, 1, 1], padding='VALID')
             conv = conv + self.conv_bias
             conv = tf.reshape(
-                conv, [-1, self.time_steps, (self.templates - 1) * self.emb_dim])
+                conv, [-1, self.time_steps, (self.template_size - 1) * self.emb_dim])
         word_vectors = tf.reshape(
-            word_vectors, [-1, self.time_steps, self.templates * self.emb_dim])
+            word_vectors, [-1, self.time_steps, self.template_size * self.emb_dim])
         word_vectors = tf.concat(2, [word_vectors, conv])
 
         with tf.variable_scope('label_inference', reuse=reuse):
